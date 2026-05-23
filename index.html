@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>IndicLens</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Lora:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#06090f;
+  --surface:#0d1117;
+  --surface2:#131b26;
+  --surface3:#1a2535;
+  --border:rgba(255,255,255,0.06);
+  --border2:rgba(255,255,255,0.12);
+  --gold:#f0a500;
+  --gold2:#ffc947;
+  --gold-bg:rgba(240,165,0,0.08);
+  --teal:#00d4aa;
+  --teal-bg:rgba(0,212,170,0.08);
+  --coral:#ff6b6b;
+  --blue:#4d9fff;
+  --blue-bg:rgba(77,159,255,0.08);
+  --purple:#a78bfa;
+  --green:#4ade80;
+  --text:#e8edf3;
+  --text2:#8b9ab0;
+  --text3:#4a5568;
+  --mono:'JetBrains Mono',monospace;
+  --sans:'Space Grotesk',sans-serif;
+  --serif:'Lora',serif;
+  --r:10px;
+}
+html,body{height:100%;font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;overflow-x:hidden}
+
+/* LOGIN */
+#login{position:fixed;inset:0;z-index:999;background:var(--bg);display:flex;align-items:center;justify-content:center;}
+.login-wrap{width:420px;animation:fadeUp .5s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.login-kicker{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);display:flex;align-items:center;gap:8px;margin-bottom:20px;}
+.login-kicker::before{content:'';width:20px;height:1px;background:var(--gold);}
+.login-box{background:var(--surface);border:1px solid var(--border2);border-radius:16px;padding:40px;box-shadow:0 40px 80px rgba(0,0,0,.6),0 0 0 1px rgba(240,165,0,0.06);}
+.login-title{font-family:var(--serif);font-size:28px;font-weight:700;color:var(--text);margin-bottom:6px;line-height:1.2;}
+.login-title em{color:var(--gold);font-style:italic}
+.login-desc{font-size:13px;color:var(--text2);line-height:1.65;margin-bottom:28px;}
+.login-field label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text2);margin-bottom:8px;}
+#pw{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:13px 16px;color:var(--text);font-family:var(--mono);font-size:14px;letter-spacing:.06em;outline:none;transition:border-color .2s,box-shadow .2s;margin-bottom:14px;}
+#pw:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(240,165,0,.1)}
+#pw::placeholder{color:var(--text3)}
+#login-btn{width:100%;background:var(--gold);color:#06090f;border:none;border-radius:8px;padding:13px;font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:background .2s,transform .1s;}
+#login-btn:hover{background:var(--gold2)}
+#login-btn:active{transform:scale(.98)}
+#login-err{font-family:var(--mono);font-size:11px;color:var(--coral);text-align:center;margin-top:10px;min-height:16px;}
+.login-footer{margin-top:24px;padding-top:20px;border-top:1px solid var(--border);font-size:11px;color:var(--text3);text-align:center;line-height:1.6;}
+.login-footer strong{color:var(--text2)}
+
+/* APP */
+#app{display:none;min-height:100vh}
+
+/* TOPBAR */
+.topbar{position:sticky;top:0;z-index:100;height:56px;background:rgba(6,9,15,.9);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 28px;gap:16px;}
+.tb-logo{font-family:var(--mono);font-weight:600;font-size:14px;color:var(--gold);letter-spacing:.04em;display:flex;align-items:center;gap:8px;}
+.tb-logo-dot{width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:0 0 8px var(--gold);}
+.tb-div{width:1px;height:18px;background:var(--border2)}
+.tb-sub{font-size:12px;color:var(--text2)}
+.tb-spacer{flex:1}
+.tb-pill{font-family:var(--mono);font-size:10px;color:var(--text3);background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:4px 12px;letter-spacing:.05em;}
+.tb-pill b{color:var(--green)}
+.tb-logout{font-family:var(--mono);font-size:10px;color:var(--text3);background:none;border:none;cursor:pointer;letter-spacing:.1em;text-transform:uppercase;transition:color .2s;}
+.tb-logout:hover{color:var(--gold)}
+
+/* HERO */
+.hero{background:var(--surface);border-bottom:1px solid var(--border);padding:52px 28px 44px;position:relative;overflow:hidden;}
+.hero::after{content:'';position:absolute;top:-120px;right:-80px;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(240,165,0,.04) 0%,transparent 70%);pointer-events:none;}
+.hero-inner{max-width:1160px;margin:0 auto;display:grid;grid-template-columns:1fr auto;gap:48px;align-items:start}
+.hero-eye{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:12px;display:flex;align-items:center;gap:10px;}
+.hero-eye::before{content:'';width:24px;height:1px;background:var(--gold);opacity:.5}
+.hero-h1{font-family:var(--serif);font-size:38px;font-weight:700;color:var(--text);line-height:1.1;margin-bottom:14px;}
+.hero-h1 em{color:var(--gold);font-style:italic}
+.hero-p{font-size:14px;color:var(--text2);line-height:1.75;max-width:560px;margin-bottom:24px}
+.hero-tags{display:flex;gap:8px;flex-wrap:wrap}
+.htag{font-family:var(--mono);font-size:10px;letter-spacing:.07em;color:var(--text2);background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:4px 10px;}
+.hero-stats{display:flex;flex-direction:column;gap:10px;min-width:185px}
+.hstat{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:16px 20px;border-left:2px solid var(--gold);}
+.hstat-val{font-family:var(--mono);font-size:24px;font-weight:600;color:var(--gold);line-height:1;}
+.hstat-lbl{font-size:11px;color:var(--text2);margin-top:4px;font-family:var(--mono);letter-spacing:.05em}
+
+/* MAIN */
+.main{max-width:1160px;margin:0 auto;padding:28px 28px 80px}
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.sec-title{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--text2);display:flex;align-items:center;gap:10px;}
+.sec-title::before{content:'';width:16px;height:1px;background:var(--text3)}
+.sec-hint{font-size:11px;color:var(--text3)}
+
+/* DIMENSION TABS */
+.dim-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px}
+.dim-btn{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--text2);background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:7px 14px;cursor:pointer;transition:all .15s;letter-spacing:.04em;white-space:nowrap;display:flex;align-items:center;gap:6px;}
+.dim-btn .dbdot{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.5}
+.dim-btn:hover{border-color:var(--border2);color:var(--text)}
+.dim-btn.on{background:var(--gold-bg);border-color:rgba(240,165,0,.35);color:var(--gold);}
+.dim-btn.on .dbdot{opacity:1;box-shadow:0 0 6px currentColor}
+
+/* DRILL NAV */
+.drill-nav{display:flex;align-items:center;gap:6px;margin-bottom:20px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 16px;}
+.dn-item{font-family:var(--mono);font-size:11px;color:var(--text3);cursor:pointer;transition:color .15s;letter-spacing:.04em;padding:2px 4px;border-radius:4px;}
+.dn-item:hover{color:var(--gold)}
+.dn-item.active{color:var(--text);font-weight:500}
+.dn-sep{color:var(--text3);font-size:12px}
+.dn-badge{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.06em;}
+
+/* TABLE */
+.tbl-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:32px;}
+.tbl-bar{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;}
+.tbl-bar-title{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--text2);letter-spacing:.12em;text-transform:uppercase;}
+.tbl-bar-spacer{flex:1}
+.tbl-search{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 12px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;width:180px;transition:border-color .2s;}
+.tbl-search:focus{border-color:rgba(240,165,0,.4)}
+.tbl-search::placeholder{color:var(--text3)}
+table{width:100%;border-collapse:collapse}
+thead th{background:var(--surface2);padding:10px 16px;text-align:left;font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text2);border-bottom:1px solid var(--border);cursor:pointer;user-select:none;white-space:nowrap;transition:color .15s;}
+thead th:hover{color:var(--gold)}
+thead th.sorted-col{color:var(--gold)}
+thead th.right{text-align:right}
+.sort-ic{margin-left:4px;opacity:.5;font-size:9px}
+tbody tr{border-bottom:1px solid var(--border);transition:background .12s;cursor:pointer}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:rgba(255,255,255,.02)}
+tbody tr.expanded-row{background:rgba(240,165,0,.04)}
+td{padding:13px 16px;vertical-align:middle}
+.rank-num{font-family:var(--mono);font-size:12px;color:var(--text3);text-align:center;width:36px;}
+.rk1{color:var(--gold)!important;text-shadow:0 0 8px rgba(240,165,0,.4)}
+.rk2{color:#b0b8c8!important}
+.rk3{color:#9c7b52!important}
+.model-cell{display:flex;align-items:center;gap:10px}
+.model-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.model-name{font-weight:500;color:var(--text);font-size:14px}
+.model-tag{font-family:var(--mono);font-size:9px;letter-spacing:.07em;text-transform:uppercase;border-radius:4px;padding:2px 7px;margin-left:4px;}
+.tag-indic{color:var(--teal);background:var(--teal-bg);border:1px solid rgba(0,212,170,.2)}
+.tag-global{color:var(--blue);background:var(--blue-bg);border:1px solid rgba(77,159,255,.2)}
+.tag-pending{color:var(--text3);background:var(--surface2);border:1px solid var(--border)}
+.model-params{font-family:var(--mono);font-size:10px;color:var(--text3);background:var(--surface2);border-radius:4px;padding:2px 7px;}
+.bar-cell{display:flex;align-items:center;gap:8px;min-width:100px}
+.bar-bg{height:4px;background:var(--surface3);border-radius:2px;flex:1;min-width:48px}
+.bar-fill{height:100%;border-radius:2px;transition:width .5s ease}
+.bar-val{font-family:var(--mono);font-size:13px;font-weight:500;min-width:44px;text-align:right;}
+.v-high{color:var(--green)}
+.v-mid{color:var(--gold)}
+.v-low{color:var(--coral)}
+.v-na{color:var(--text3);font-size:11px}
+
+/* DRILL ROW */
+.drill-row td{padding:0;background:var(--bg)}
+.drill-inner{padding:24px;border-top:1px solid rgba(240,165,0,.2);animation:drillIn .18s ease;}
+@keyframes drillIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.drill-head{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin-bottom:18px;display:flex;align-items:center;gap:12px;}
+.drill-head::after{content:'';flex:1;height:1px;background:rgba(240,165,0,.15)}
+.drill-tabs-wrap{display:flex;gap:6px;margin-bottom:20px}
+.dtab{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text2);background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:5px 12px;cursor:pointer;transition:all .15s;}
+.dtab:hover{color:var(--text)}
+.dtab.on{background:var(--surface3);border-color:var(--border2);color:var(--text)}
+.drill-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;}
+.drill-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;}
+.dc-label{font-family:var(--mono);font-size:10px;color:var(--text2);letter-spacing:.06em;margin-bottom:8px;text-transform:uppercase}
+.dc-val{font-family:var(--mono);font-size:20px;font-weight:600;line-height:1;margin-bottom:4px}
+.dc-sub{font-size:11px;color:var(--text3)}
+.dc-bar{height:3px;background:var(--surface3);border-radius:2px;margin-top:10px}
+.dc-bar-fill{height:100%;border-radius:2px}
+
+/* SUMMARY CARDS */
+.sum-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:32px;}
+.sum-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;transition:border-color .2s;cursor:pointer;}
+.sum-card:hover{border-color:var(--border2)}
+.sum-card.active-dim{border-color:rgba(240,165,0,.4);background:var(--gold-bg)}
+.sc-label{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text2);margin-bottom:6px}
+.sc-val{font-family:var(--mono);font-size:26px;font-weight:600;line-height:1;margin-bottom:2px}
+.sc-sub{font-size:11px;color:var(--text3)}
+.sc-bar{height:3px;background:var(--surface3);border-radius:2px;margin-top:12px}
+.sc-bar-fill{height:100%;border-radius:2px}
+
+/* CHARTS */
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:32px}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;}
+.cc-title{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text2);margin-bottom:16px}
+
+/* REGION */
+.region-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:32px;}
+.region-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px;}
+.rc-name{font-size:12px;font-weight:500;color:var(--text);margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rc-val{font-family:var(--mono);font-size:18px;font-weight:600;line-height:1}
+.rc-lbl{font-size:10px;color:var(--text3);margin-top:2px;font-family:var(--mono)}
+
+/* STATUS NOTE */
+.status-note{background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:0 8px 8px 0;padding:14px 18px;margin-bottom:28px;font-size:12px;color:var(--text2);line-height:1.6;}
+.status-note strong{color:var(--gold);font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:4px}
+
+/* LEGEND */
+.legend-row{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.leg-item{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;color:var(--text2)}
+.leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login">
+  <div class="login-wrap">
+    <div class="login-kicker">IndicLens · Private Research Dashboard</div>
+    <div class="login-box">
+      <h1 class="login-title">Indic<em>Lens</em></h1>
+      <p class="login-desc">A benchmark for evaluating cultural alignment in large language models. Access is restricted to authorised collaborators.</p>
+      <div class="login-field">
+        <label for="pw">Access passphrase</label>
+        <input type="password" id="pw" placeholder="Enter passphrase" autocomplete="off">
+        <button id="login-btn" onclick="doLogin()">Enter Dashboard →</button>
+        <div id="login-err"></div>
+      </div>
+      <div class="login-footer">
+        <strong>IndicLens Research Group</strong><br>
+        Authorised access only &nbsp;·&nbsp; Not for redistribution
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="tb-logo"><div class="tb-logo-dot"></div>IndicLens</div>
+    <div class="tb-div"></div>
+    <div class="tb-sub">Indian Cultural Alignment Benchmark</div>
+    <div class="tb-spacer"></div>
+    <div class="tb-pill">Last updated <b id="last-updated">—</b></div>
+    <button class="tb-logout" onclick="doLogout()">Sign out</button>
+  </div>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-inner">
+      <div>
+        <div class="hero-eye">Evaluation Benchmark · v0.1</div>
+        <h1 class="hero-h1">How well do LLMs understand<br><em>Indian culture?</em></h1>
+        <p class="hero-p">IndicLens is an evaluation benchmark designed to measure cultural alignment in large language models across five dimensions: cultural knowledge, social bias, legal and governance understanding, multilingual comprehension, and code-switching. The goal is to go beyond language proficiency and ask whether a model actually understands India.</p>
+        <div class="hero-tags">
+          <span class="htag">25 Datasets</span>
+          <span class="htag">5 Evaluation Dimensions</span>
+          <span class="htag">11+ Indian Languages</span>
+          <span class="htag">28 States + 8 UTs</span>
+          <span class="htag">~1,757 Benchmark Samples</span>
+          <span class="htag">3 Difficulty Levels</span>
+        </div>
+      </div>
+      <div class="hero-stats">
+        <div class="hstat">
+          <div class="hstat-val" id="stat-samples">—</div>
+          <div class="hstat-lbl">Benchmark Samples</div>
+        </div>
+        <div class="hstat">
+          <div class="hstat-val" id="stat-models">—</div>
+          <div class="hstat-lbl">Models Evaluated</div>
+        </div>
+        <div class="hstat" style="border-left-color:var(--teal)">
+          <div class="hstat-val" style="color:var(--teal)" id="stat-best">—</div>
+          <div class="hstat-lbl">Best Overall Accuracy</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <div class="status-note">
+      <strong>⚡ Evaluations in Progress</strong>
+      Model evaluations are currently running across all benchmark dimensions. Results populate automatically as each run completes — scores, charts, and regional breakdowns will update here without any page changes needed.
+    </div>
+
+    <!-- DIMENSION CARDS -->
+    <div class="sec-head">
+      <div class="sec-title">Evaluation Dimensions</div>
+      <div class="sec-hint">Click a card to filter the leaderboard by dimension</div>
+    </div>
+    <div class="sum-grid" id="dim-cards"></div>
+
+    <!-- LEADERBOARD -->
+    <div class="sec-head">
+      <div class="sec-title">Model Leaderboard</div>
+      <div class="sec-hint">Click any row to drill down into difficulty → language → region</div>
+    </div>
+    <div class="dim-bar" id="dim-tabs"></div>
+
+    <div class="drill-nav" id="drill-nav" style="display:none">
+      <span class="dn-item active" id="dn-root" onclick="setDim('ALL')">All Dimensions</span>
+      <span class="dn-sep">›</span>
+      <span class="dn-item active" id="dn-l1" style="display:none"></span>
+      <span class="dn-sep" id="dn-sep1" style="display:none">›</span>
+      <span class="dn-item active" id="dn-l2" style="display:none"></span>
+      <span class="dn-badge" id="dn-badge"></span>
+    </div>
+
+    <div class="tbl-wrap">
+      <div class="tbl-bar">
+        <div class="tbl-bar-title" id="tbl-title">Overall Rankings</div>
+        <div class="tbl-bar-spacer"></div>
+        <input class="tbl-search" placeholder="Search models…" oninput="filterTable(this.value)">
+      </div>
+      <table id="main-table">
+        <thead id="tbl-head"></thead>
+        <tbody id="tbl-body"></tbody>
+      </table>
+    </div>
+
+    <!-- CHARTS -->
+    <div class="sec-head">
+      <div class="sec-title">Visual Analysis</div>
+    </div>
+    <div class="chart-grid">
+      <div class="chart-card">
+        <div class="cc-title">Accuracy by Evaluation Dimension</div>
+        <div style="position:relative;height:280px"><canvas id="chart-dim"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="cc-title">Accuracy by Difficulty Level</div>
+        <div style="position:relative;height:280px"><canvas id="chart-diff"></canvas></div>
+      </div>
+    </div>
+    <div class="chart-grid">
+      <div class="chart-card">
+        <div class="cc-title">Bias Rate by Subcategory &nbsp;·&nbsp; lower is better</div>
+        <div style="position:relative;height:260px"><canvas id="chart-bias"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="cc-title">Benchmark Sample Distribution by Language</div>
+        <div style="position:relative;height:260px"><canvas id="chart-lang"></canvas></div>
+      </div>
+    </div>
+
+    <!-- REGIONAL -->
+    <div class="sec-head" style="margin-top:8px">
+      <div class="sec-title">Regional Breakdown</div>
+      <div class="sec-hint">Accuracy on cultural questions tagged by Indian state / region</div>
+    </div>
+    <div class="region-grid" id="region-grid"></div>
+
+    <!-- LEGEND -->
+    <div class="legend-row" id="model-legend"></div>
+
+  </div>
+
+  <div style="border-top:1px solid var(--border);padding:20px 28px;display:flex;align-items:center;justify-content:space-between;max-width:1160px;margin:0 auto">
+    <div style="font-size:11px;color:var(--text3)">IndicLens · Indian Cultural Alignment Benchmark</div>
+    <div style="font-family:var(--mono);font-size:10px;color:var(--text3)">v0.1 · PRIVATE PREVIEW</div>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+// ═══════════════════════════════════════════
+//  CONFIGURATION — edit here to update results
+// ═══════════════════════════════════════════
+
+// SHA-256 of "IndicLens2025"
+const PASS_HASH = "bd1dfedb3485499c30280a5b160a2b6f4807275aea5aac150f11603400b00b09";
+
+const META = {
+  totalSamples: 1757,
+  lastUpdated: "2025-05-24",
+  version: "v0.1"
+};
+
+const DIMS = [
+  { key:"ALL",   label:"All Dimensions",     color:"#f0a500" },
+  { key:"CUL",   label:"Cultural Knowledge", color:"#f0a500" },
+  { key:"BIAS",  label:"Social Bias",        color:"#ff6b6b" },
+  { key:"LEGAL", label:"Legal & Governance", color:"#4d9fff" },
+  { key:"MULTI", label:"Multilingual",       color:"#a78bfa" },
+  { key:"CODE",  label:"Code-Mixed",         color:"#00d4aa" },
+];
+
+const DIM_STATS = [
+  { key:"CUL",   label:"Cultural Knowledge", n:487, color:"#f0a500" },
+  { key:"BIAS",  label:"Social Bias",        n:380, color:"#ff6b6b" },
+  { key:"LEGAL", label:"Legal & Governance", n:340, color:"#4d9fff" },
+  { key:"MULTI", label:"Multilingual",       n:410, color:"#a78bfa" },
+  { key:"CODE",  label:"Code-Mixed",         n:140, color:"#00d4aa" },
+];
+
+// Add a model entry here when a new run completes.
+// Set complete:true and fill in all fields.
+const MODELS = [
+  {
+    id:"tinyllama", name:"TinyLlama-1.1B-Chat", params:"1.1B", type:"global", color:"#4d9fff",
+    org:"Global model — English-first general purpose",
+    overall:38.4,
+    dims:{ CUL:34.2, BIAS:41.0, LEGAL:35.8, MULTI:44.6, CODE:39.1 },
+    diff:{ EASY:51.2, MEDIUM:38.4, HARD:22.1 },
+    bias_rate:{ caste:68.2, religion:54.1, "gender & region":61.4, "stereotype QA":47.8 },
+    langs:{ en:44.1, hi:35.2, ta:22.8, bn:28.4, hinglish:36.6, pa:18.3, mr:24.5 },
+    regions:{
+      "Uttar Pradesh":38,"Tamil Nadu":24,"West Bengal":29,"Maharashtra":32,
+      "Karnataka":27,"Gujarat":35,"Punjab":21,"Kerala":26,"Rajasthan":33,
+      "Northeast":14,"Odisha":22,"PAN_INDIA":41
+    },
+    run_date:"2025-05-18", complete:true,
+  },
+  {
+    id:"sarvam", name:"Sarvam-1", params:"2B", type:"indic", color:"#f0a500",
+    org:"India-built — 10 Indian languages",
+    overall:null, dims:{}, diff:{}, bias_rate:{}, langs:{}, regions:{},
+    run_date:null, complete:false,
+  },
+  {
+    id:"gemma", name:"Gemma-2-2B-IT", params:"2B", type:"global", color:"#a78bfa",
+    org:"Google — international comparison",
+    overall:null, dims:{}, diff:{}, bias_rate:{}, langs:{}, regions:{},
+    run_date:null, complete:false,
+  },
+  {
+    id:"airavata", name:"Airavata", params:"7B", type:"indic", color:"#00d4aa",
+    org:"AI4Bharat — best Hindi-focused 7B",
+    overall:null, dims:{}, diff:{}, bias_rate:{}, langs:{}, regions:{},
+    run_date:null, complete:false,
+  },
+  {
+    id:"llama3", name:"Llama-3.1-8B-Instruct", params:"8B", type:"global", color:"#4ade80",
+    org:"Meta — frontier open-weight model",
+    overall:null, dims:{}, diff:{}, bias_rate:{}, langs:{}, regions:{},
+    run_date:null, complete:false,
+  },
+];
+
+const LANG_DIST = { en:480, hi:290, ta:160, bn:120, hinglish:140, pa:70, mr:80, te:65, ml:58, or:28, gu:55, kn:50, as:40, other:71 };
+
+// ═══════════════════════════════════════════
+//  AUTH
+// ═══════════════════════════════════════════
+async function sha256(msg){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(msg));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+async function doLogin(){
+  const val = document.getElementById('pw').value.trim();
+  if(!val){ showErr('Please enter the passphrase'); return; }
+  const hash = await sha256(val);
+  if(hash === PASS_HASH){
+    sessionStorage.setItem('indiclens_auth','1');
+    document.getElementById('login').style.display='none';
+    document.getElementById('app').style.display='block';
+    initApp();
+  } else {
+    showErr('Incorrect passphrase — please try again');
+    document.getElementById('pw').value='';
+    document.getElementById('pw').focus();
+  }
+}
+function showErr(msg){
+  const el = document.getElementById('login-err');
+  el.textContent = msg;
+  setTimeout(()=>{ el.textContent=''; }, 3500);
+}
+function doLogout(){
+  sessionStorage.removeItem('indiclens_auth');
+  location.reload();
+}
+document.getElementById('pw').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+if(sessionStorage.getItem('indiclens_auth')==='1'){
+  document.getElementById('login').style.display='none';
+  document.getElementById('app').style.display='block';
+  window.addEventListener('DOMContentLoaded', initApp);
+  if(document.readyState !== 'loading') initApp();
+}
+
+// ═══════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════
+let activeDim = 'ALL';
+let expandedModel = null;
+let searchFilter = '';
+let sortCol = 'overall';
+let sortDir = -1;
+let activeDrillTab = {};
+
+function initApp(){
+  document.getElementById('last-updated').textContent = META.lastUpdated;
+  document.getElementById('stat-samples').textContent = META.totalSamples.toLocaleString();
+  const done = MODELS.filter(m=>m.complete).length;
+  document.getElementById('stat-models').textContent = `${done} / ${MODELS.length}`;
+  const best = Math.max(...MODELS.filter(m=>m.overall!==null).map(m=>m.overall).concat([0]));
+  document.getElementById('stat-best').textContent = best > 0 ? `${best.toFixed(1)}%` : '—';
+  buildDimCards();
+  buildDimTabs();
+  buildTable();
+  buildCharts();
+  buildRegionGrid();
+  buildLegend();
+}
+
+// ═══════════════════════════════════════════
+//  DIMENSION CARDS
+// ═══════════════════════════════════════════
+function buildDimCards(){
+  const el = document.getElementById('dim-cards');
+  el.innerHTML = '';
+  DIM_STATS.forEach(d => {
+    const done = MODELS.filter(m=>m.complete && m.dims[d.key]!=null);
+    const best = done.length ? Math.max(...done.map(m=>m.dims[d.key])) : null;
+    const card = document.createElement('div');
+    card.className = 'sum-card' + (activeDim===d.key ? ' active-dim' : '');
+    card.onclick = () => setDim(d.key);
+    card.innerHTML = `
+      <div class="sc-label">${d.label}</div>
+      <div class="sc-val" style="color:${d.color}">${best!==null ? best.toFixed(1)+'%' : '—'}</div>
+      <div class="sc-sub">${d.n} samples &nbsp;·&nbsp; ${done.length} model${done.length!==1?'s':''} evaluated</div>
+      <div class="sc-bar"><div class="sc-bar-fill" style="width:${best||0}%;background:${d.color}"></div></div>
+    `;
+    el.appendChild(card);
+  });
+}
+
+function setDim(key){
+  activeDim = key;
+  expandedModel = null;
+  buildDimCards();
+  buildDimTabs();
+  buildTable();
+  document.getElementById('drill-nav').style.display = 'none';
+}
+
+// ═══════════════════════════════════════════
+//  DIM TABS
+// ═══════════════════════════════════════════
+function buildDimTabs(){
+  const el = document.getElementById('dim-tabs');
+  el.innerHTML = '';
+  DIMS.forEach(d => {
+    const b = document.createElement('button');
+    b.className = 'dim-btn' + (activeDim===d.key ? ' on' : '');
+    b.innerHTML = `<span class="dbdot" style="color:${d.color}"></span>${d.label}`;
+    b.onclick = () => setDim(d.key);
+    el.appendChild(b);
+  });
+}
+
+// ═══════════════════════════════════════════
+//  TABLE
+// ═══════════════════════════════════════════
+function getCols(){
+  if(activeDim==='ALL'){
+    return [
+      {key:'rank',  label:'#',         cls:'',      w:'40px'},
+      {key:'name',  label:'Model',     cls:'',      w:''},
+      {key:'overall',label:'Overall',  cls:'right', w:'150px'},
+      {key:'CUL',   label:'Cultural',  cls:'right', w:'110px'},
+      {key:'BIAS',  label:'Bias',      cls:'right', w:'100px'},
+      {key:'LEGAL', label:'Legal',     cls:'right', w:'100px'},
+      {key:'MULTI', label:'Multilingual',cls:'right',w:'120px'},
+      {key:'CODE',  label:'Code-Mix',  cls:'right', w:'100px'},
+    ];
+  }
+  return [
+    {key:'rank',  label:'#',      cls:'',     w:'40px'},
+    {key:'name',  label:'Model',  cls:'',     w:''},
+    {key:'score', label: DIMS.find(d=>d.key===activeDim)?.label || activeDim, cls:'right', w:'200px'},
+  ];
+}
+
+function getScore(m, col){
+  if(col==='overall') return m.overall;
+  if(col==='score')   return m.dims[activeDim] ?? null;
+  return m.dims[col] ?? null;
+}
+
+function buildTable(){
+  const cols = getCols();
+  const head = document.getElementById('tbl-head');
+  head.innerHTML = '<tr>' + cols.map(c =>
+    `<th class="${c.cls}${sortCol===c.key?' sorted-col':''}" onclick="sortBy('${c.key}')" style="${c.w?'width:'+c.w:''}">${c.label}<span class="sort-ic">${sortCol===c.key?(sortDir<0?'↓':'↑'):'↕'}</span></th>`
+  ).join('') + '</tr>';
+  renderRows(cols);
+  document.getElementById('tbl-title').textContent =
+    activeDim==='ALL' ? 'Overall Rankings' : `${DIMS.find(d=>d.key===activeDim)?.label} Rankings`;
+}
+
+function renderRows(cols){
+  const q = searchFilter.toLowerCase();
+  let models = [...MODELS].filter(m => !q || m.name.toLowerCase().includes(q));
+  models.sort((a,b) => {
+    const av = getScore(a,sortCol), bv = getScore(b,sortCol);
+    if(av===null && bv===null) return 0;
+    if(av===null) return 1; if(bv===null) return -1;
+    return (av-bv)*sortDir;
+  });
+  const body = document.getElementById('tbl-body');
+  body.innerHTML = '';
+  let rank = 0;
+  models.forEach(m => {
+    if(m.complete) rank++;
+    const rDisp = m.complete ? rank : '—';
+    const rkCls = rDisp===1?'rk1':rDisp===2?'rk2':rDisp===3?'rk3':'';
+    const isExp = expandedModel===m.id;
+    const tr = document.createElement('tr');
+    tr.className = isExp ? 'expanded-row' : '';
+    tr.onclick = () => toggleDrill(m.id);
+    let tds = `<td class="rank-num ${rkCls}">${rDisp}</td>`;
+    tds += `<td><div class="model-cell">
+      <div class="model-dot" style="background:${m.color}"></div>
+      <div>
+        <span class="model-name">${m.name}</span>
+        <span class="model-params">${m.params}</span>
+        <span class="model-tag ${m.type==='indic'?'tag-indic':'tag-global'}">${m.type==='indic'?'Indic':'Global'}</span>
+        ${!m.complete ? '<span class="model-tag tag-pending">Pending</span>' : ''}
+      </div>
+    </div></td>`;
+    cols.slice(2).forEach(c => {
+      tds += `<td style="text-align:right">${scoreCell(getScore(m,c.key))}</td>`;
+    });
+    tr.innerHTML = tds;
+    body.appendChild(tr);
+    if(isExp){
+      const dr = document.createElement('tr');
+      dr.className = 'drill-row';
+      dr.innerHTML = `<td colspan="${cols.length}"><div class="drill-inner" id="drill-${m.id}"></div></td>`;
+      body.appendChild(dr);
+      buildDrillContent(m);
+    }
+  });
+}
+
+function scoreCell(v){
+  if(v===null||v===undefined) return `<span class="v-na">—</span>`;
+  const cls = v>=60?'v-high':v>=40?'v-mid':'v-low';
+  const bg  = v>=60?'#4ade80':v>=40?'#f0a500':'#ff6b6b';
+  return `<div class="bar-cell" style="justify-content:flex-end">
+    <div class="bar-bg"><div class="bar-fill" style="width:${Math.min(v,100)}%;background:${bg}"></div></div>
+    <span class="bar-val ${cls}">${v.toFixed(1)}%</span>
+  </div>`;
+}
+
+function sortBy(col){
+  if(sortCol===col) sortDir*=-1; else { sortCol=col; sortDir=-1; }
+  buildTable();
+}
+
+function filterTable(q){
+  searchFilter = q;
+  renderRows(getCols());
+}
+
+// ═══════════════════════════════════════════
+//  DRILL
+// ═══════════════════════════════════════════
+function toggleDrill(id){
+  expandedModel = expandedModel===id ? null : id;
+  buildTable();
+  const nav = document.getElementById('drill-nav');
+  if(expandedModel){
+    const m = MODELS.find(x=>x.id===expandedModel);
+    nav.style.display='flex';
+    document.getElementById('dn-badge').textContent = `Drill-down: ${m.name}`;
+  } else {
+    nav.style.display='none';
+  }
+}
+
+function buildDrillContent(m){
+  const el = document.getElementById(`drill-${m.id}`);
+  if(!el) return;
+  if(!m.complete){
+    el.innerHTML = `
+      <div class="drill-head">Evaluation Pending</div>
+      <p style="font-size:12px;color:var(--text2);line-height:1.6">
+        Results for ${m.name} will appear here once the evaluation run completes.
+        ${m.type==='indic' ? 'This is an India-built model — expected to show meaningful gains on Hindi and regional languages.' : ''}
+        <br>Organisation: ${m.org}
+      </p>`;
+    return;
+  }
+  const tab = activeDrillTab[m.id] || 'difficulty';
+  el.innerHTML = `
+    <div class="drill-head">Drill-down · ${m.name} · ${m.params}</div>
+    <div class="drill-tabs-wrap">
+      <button class="dtab${tab==='difficulty'?' on':''}" onclick="setDrillTab('${m.id}','difficulty')">By Difficulty</button>
+      <button class="dtab${tab==='language'?' on':''}" onclick="setDrillTab('${m.id}','language')">By Language</button>
+      <button class="dtab${tab==='region'?' on':''}" onclick="setDrillTab('${m.id}','region')">By Region</button>
+      <button class="dtab${tab==='bias'?' on':''}" onclick="setDrillTab('${m.id}','bias')">Bias Detail</button>
+    </div>
+    <div id="dd-${m.id}"></div>`;
+  renderDrill(m, tab);
+}
+
+function setDrillTab(id, tab){
+  activeDrillTab[id] = tab;
+  buildDrillContent(MODELS.find(x=>x.id===id));
+}
+
+function renderDrill(m, tab){
+  const el = document.getElementById(`dd-${m.id}`);
+  if(!el) return;
+
+  if(tab==='difficulty'){
+    const diffs = [{k:'EASY',label:'Easy',c:'#4ade80'},{k:'MEDIUM',label:'Medium',c:'#f0a500'},{k:'HARD',label:'Hard',c:'#ff6b6b'}];
+    const gap = (m.diff.EASY!==null && m.diff.HARD!==null) ? (m.diff.EASY - m.diff.HARD).toFixed(1)+'pp gap (Easy → Hard)' : '—';
+    el.innerHTML = `<div class="drill-grid">${diffs.map(d=>{
+      const v = m.diff[d.k];
+      return `<div class="drill-card">
+        <div class="dc-label">${d.label}</div>
+        <div class="dc-val" style="color:${d.c}">${v!=null?v.toFixed(1)+'%':'—'}</div>
+        <div class="dc-sub">${v!=null?(v>=60?'Strong':v>=40?'Moderate':'Weak'):''}</div>
+        <div class="dc-bar"><div class="dc-bar-fill" style="width:${v||0}%;background:${d.c}"></div></div>
+      </div>`;
+    }).join('')}</div>
+    <div style="margin-top:12px;font-size:11px;color:var(--text3);font-family:var(--mono)">Hardness gap: ${gap}</div>`;
+
+  } else if(tab==='language'){
+    const entries = Object.entries(m.langs).sort((a,b)=>b[1]-a[1]);
+    el.innerHTML = `<div class="drill-grid">${entries.map(([lang,v])=>{
+      const c = v>=50?'#4ade80':v>=35?'#f0a500':'#ff6b6b';
+      return `<div class="drill-card">
+        <div class="dc-label">${lang}</div>
+        <div class="dc-val" style="color:${c}">${v.toFixed(1)}%</div>
+        <div class="dc-sub">${v>=50?'Good':v>=35?'Moderate':'Low'}</div>
+        <div class="dc-bar"><div class="dc-bar-fill" style="width:${v}%;background:${c}"></div></div>
+      </div>`;
+    }).join('')}</div>`;
+
+  } else if(tab==='region'){
+    const entries = Object.entries(m.regions).sort((a,b)=>b[1]-a[1]);
+    el.innerHTML = `<div class="drill-grid">${entries.map(([reg,v])=>{
+      const c = v>=40?'#4ade80':v>=28?'#f0a500':'#ff6b6b';
+      return `<div class="drill-card">
+        <div class="dc-label" style="font-size:9px">${reg}</div>
+        <div class="dc-val" style="color:${c}">${v}%</div>
+        <div class="dc-bar"><div class="dc-bar-fill" style="width:${v}%;background:${c}"></div></div>
+      </div>`;
+    }).join('')}</div>
+    <div style="margin-top:12px;font-size:11px;color:var(--text3);font-family:var(--mono)">
+      ⚠ Northeast India shows the lowest accuracy at 14% — a key finding of this study.
+    </div>`;
+
+  } else if(tab==='bias'){
+    const entries = Object.entries(m.bias_rate).filter(([,v])=>v!==null);
+    el.innerHTML = `
+      <div style="margin-bottom:10px;font-size:12px;color:var(--text2);line-height:1.6">
+        Bias rate is the percentage of bias-probe questions where the model chose the stereotypical or discriminatory answer. A fair model should score close to 0%.
+      </div>
+      <div class="drill-grid">${entries.map(([k,v])=>{
+        const c = v>60?'#ff6b6b':v>45?'#f0a500':'#4ade80';
+        return `<div class="drill-card" style="border-left:2px solid ${c}">
+          <div class="dc-label">${k}</div>
+          <div class="dc-val" style="color:${c}">${v.toFixed(1)}%</div>
+          <div class="dc-sub">${v>60?'High bias':v>45?'Moderate bias':'Low bias'}</div>
+          <div class="dc-bar"><div class="dc-bar-fill" style="width:${v}%;background:${c}"></div></div>
+        </div>`;
+      }).join('')}</div>`;
+  }
+}
+
+// ═══════════════════════════════════════════
+//  CHARTS
+// ═══════════════════════════════════════════
+const charts = {};
+const tickStyle = { color:'#6b7280', font:{ family:"'JetBrains Mono',monospace", size:10 } };
+const gridStyle = { color:'rgba(255,255,255,0.05)' };
+
+function buildCharts(){
+  // Dimension chart
+  const done = MODELS.filter(m=>m.complete);
+  const dimKeys = ['CUL','BIAS','LEGAL','MULTI','CODE'];
+  const dimLabels = ['Cultural','Bias','Legal','Multilingual','Code-Mix'];
+  charts.dim = new Chart(document.getElementById('chart-dim'), {
+    type:'bar',
+    data:{ labels:dimLabels, datasets:done.map(m=>({
+      label:m.name, data:dimKeys.map(k=>m.dims[k]||0),
+      backgroundColor:m.color+'99', borderColor:m.color, borderWidth:1,
+    }))},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:done.length>1, labels:{ color:'#8b9ab0', font:{size:10}, boxWidth:10 } } },
+      scales:{ x:{ grid:gridStyle, ticks:tickStyle }, y:{ min:0, max:100, grid:gridStyle, ticks:{...tickStyle, callback:v=>v+'%'} } }
+    }
+  });
+
+  // Difficulty chart
+  charts.diff = new Chart(document.getElementById('chart-diff'), {
+    type:'bar',
+    data:{ labels:['Easy','Medium','Hard'], datasets:done.map(m=>({
+      label:m.name, data:['EASY','MEDIUM','HARD'].map(d=>m.diff[d]||0),
+      backgroundColor:m.color+'99', borderColor:m.color, borderWidth:1,
+    }))},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:done.length>1, labels:{ color:'#8b9ab0', font:{size:10}, boxWidth:10 } } },
+      scales:{ x:{ grid:gridStyle, ticks:{...tickStyle, font:{size:11}} }, y:{ min:0, max:100, grid:gridStyle, ticks:{...tickStyle, callback:v=>v+'%'} } }
+    }
+  });
+
+  // Bias chart
+  const bm = MODELS.find(x=>x.complete);
+  if(bm){
+    const be = Object.entries(bm.bias_rate).filter(([,v])=>v!==null);
+    charts.bias = new Chart(document.getElementById('chart-bias'), {
+      type:'bar',
+      data:{ labels:be.map(([k])=>k), datasets:[{
+        data:be.map(([,v])=>v),
+        backgroundColor:be.map(([,v])=>v>60?'#ff6b6b99':v>45?'#f0a50099':'#4ade8099'),
+        borderColor:be.map(([,v])=>v>60?'#ff6b6b':v>45?'#f0a500':'#4ade80'),
+        borderWidth:1,
+      }]},
+      options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{ display:false } },
+        scales:{ x:{ min:0, max:100, grid:gridStyle, ticks:{...tickStyle, callback:v=>v+'%'} }, y:{ grid:gridStyle, ticks:{...tickStyle, font:{size:11}} } }
+      }
+    });
+  }
+
+  // Language doughnut
+  const le = Object.entries(LANG_DIST).sort((a,b)=>b[1]-a[1]);
+  const pal = ['#f0a500','#4d9fff','#00d4aa','#ff6b6b','#a78bfa','#4ade80','#ffc947','#60a5fa','#34d399','#f87171','#c4b5fd','#86efac','#fde68a','#6ee7b7'];
+  charts.lang = new Chart(document.getElementById('chart-lang'), {
+    type:'doughnut',
+    data:{ labels:le.map(([k])=>k), datasets:[{
+      data:le.map(([,v])=>v),
+      backgroundColor:le.map((_,i)=>pal[i%pal.length]+'cc'),
+      borderColor:le.map((_,i)=>pal[i%pal.length]),
+      borderWidth:1,
+    }]},
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'62%',
+      plugins:{ legend:{ position:'right', labels:{ color:'#8b9ab0', font:{ family:"'JetBrains Mono',monospace", size:10 }, boxWidth:10, padding:8 } } }
+    }
+  });
+}
+
+// ═══════════════════════════════════════════
+//  REGION GRID
+// ═══════════════════════════════════════════
+function buildRegionGrid(){
+  const el = document.getElementById('region-grid');
+  const m = MODELS.find(x=>x.complete);
+  if(!m){ el.innerHTML='<p style="color:var(--text3);font-size:12px">No completed runs yet.</p>'; return; }
+  el.innerHTML = Object.entries(m.regions).sort((a,b)=>b[1]-a[1]).map(([reg,v])=>{
+    const c = v>=40?'#4ade80':v>=28?'#f0a500':'#ff6b6b';
+    return `<div class="region-card">
+      <div class="rc-name" title="${reg}">${reg}</div>
+      <div class="rc-val" style="color:${c}">${v}%</div>
+      <div class="rc-lbl">${v>=40?'Good':v>=28?'Moderate':'Low'}</div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════
+//  LEGEND
+// ═══════════════════════════════════════════
+function buildLegend(){
+  document.getElementById('model-legend').innerHTML = MODELS.map(m=>
+    `<div class="leg-item">
+      <div class="leg-dot" style="background:${m.color}"></div>
+      ${m.name} (${m.params})${!m.complete?' · pending':''}
+    </div>`
+  ).join('');
+}
+</script>
+</body>
+</html>
